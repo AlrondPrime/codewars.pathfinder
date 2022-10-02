@@ -2,6 +2,7 @@
 // Created by alrond on 10/1/22.
 //
 #include <fstream>
+#include <iostream>
 #include <array>
 #include <string>
 #include <algorithm>
@@ -17,6 +18,8 @@ struct Point
     int x, y;
     bool wall;
     bool checked{false};
+    bool queued{false};
+    char came_from{'.'};
 
     Point()=default;
     Point(int x, int y, bool is_wall) :
@@ -29,7 +32,7 @@ class Labyrinth
 public:
     Labyrinth()=default;
 
-    Labyrinth(const std::string &_map)
+    explicit Labyrinth(const std::string &_map)
     {
         dimension = count_dimension(_map);
         this->parse_map(_map);
@@ -42,12 +45,13 @@ public:
     void parse_map(const std::string &_map);
 
 private:
-    int dimension;
+    size_t dimension{};
     std::vector<std::vector<Point>> map{};
 
     class Crawler
     {
         int x, y;
+        char direction{'.'};
         int counter{};
         Point *point;
         Labyrinth & parent;
@@ -63,14 +67,14 @@ private:
         }
 
         bool operator++();
-        bool is_wall(const int _x, const int _y);
-        bool is_valid(const int _x, const int _y);
+        bool is_wall(int _x, int _y) const;
+        bool is_valid(int _x, int _y) const;
     };
 
 
-    int count_dimension(const std::string &map)
+    int count_dimension(const std::string &_map)
     {
-        return (-1 + sqrt(1 + 4 * map.size())) / 2;
+        return (-1 + sqrt(1 + 4 * _map.size())) / 2;
     }
 
     void print_map()
@@ -88,14 +92,31 @@ private:
             {
                 if(x.checked)
                     printf("\033[43m");
-                //printf("\033[31m");
-                printf(x.wall ? "W" : ".");
+                else if(x.queued)
+                    printf("\033[1;44m");
+                if(x.came_from == '.')
+                    printf(x.wall ? "W" : ".");
+                else
+                    switch (x.came_from)
+                    {
+                        case 'U':
+                            printf("\u2191");
+                            break;
+                        case 'L':
+                            printf("\u2190");
+                            break;
+                        case 'D':
+                            printf("\u2193");
+                            break;
+                        case 'R':
+                            printf("\u2192");
+                            break;
+                    }
                 printf("\033[0m");
             }
             printf("\n");
         }
         printf("\n");
-        //getchar();
     }
 
 
